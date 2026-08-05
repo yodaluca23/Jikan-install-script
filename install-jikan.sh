@@ -339,14 +339,20 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 10. Seed fast metadata (genres, producers, current season/schedule)
+# 10. Kick off initial seeding in the background (producers alone scrapes
+#     ~900 entries with a rate-limit delay, so none of this is instant —
+#     it runs detached so this script can finish and print the summary).
 # ---------------------------------------------------------------------------
 echo
-echo "Seeding fast metadata (genres, producers, current season, schedule)..."
-docker exec jikan_rest php artisan indexer:genres || true
-docker exec jikan_rest php artisan indexer:producers || true
-docker exec jikan_rest php artisan indexer:anime-current-season || true
-docker exec jikan_rest php artisan indexer:anime-schedule || true
+echo "Starting initial metadata seeding in the background (genres, producers,"
+echo "current season, schedule) — this can take several minutes and continues"
+echo "after this script exits."
+docker exec -d jikan_rest sh -c '
+  php artisan indexer:genres               >> /tmp/indexer-genres.log 2>&1
+  php artisan indexer:producers            >> /tmp/indexer-producers.log 2>&1
+  php artisan indexer:anime-current-season >> /tmp/indexer-season.log 2>&1
+  php artisan indexer:anime-schedule       >> /tmp/indexer-schedule.log 2>&1
+'
 
 echo
 echo "============================================================"
@@ -357,6 +363,10 @@ echo "   JIKAN_API_BASE=http://jikan_rest:8080/v4"
 echo
 echo " aiometadata's compose service must also join the '$NET_NAME'"
 echo " network for that hostname to resolve."
+echo
+echo " Initial seeding (genres/producers/season/schedule) is running in the"
+echo " background. Check progress with:"
+echo "   docker exec jikan_rest tail -f /tmp/indexer-producers.log"
 echo
 echo " Full catalog (~30k anime, several hours) is NOT run automatically."
 echo " Kick it off whenever you're ready with:"
