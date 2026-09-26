@@ -280,10 +280,11 @@ services:
       - ./data/mongo:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
-      test: ["CMD-SHELL", "mongosh mongodb://localhost:27017 --quiet --eval 'db.runCommand(\"ping\").ok'"]
+      test: ["CMD-SHELL", "mongo mongodb://127.0.0.1:27017 --quiet --eval 'db.runCommand({ ping: 1 }).ok'"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
 
   jikan_redis:
     image: docker.io/redis:6-alpine
