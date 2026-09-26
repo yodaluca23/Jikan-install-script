@@ -122,8 +122,8 @@ EOF
 # 5. Write mongo-init.js (creates app user + indexes on first boot)
 # ---------------------------------------------------------------------------
 cat > mongo-init.js << 'EOF'
-const userToCreate = fs.readFileSync('/run/secrets/jikan_db_username', 'utf8').trim();
-const userPassword = fs.readFileSync('/run/secrets/jikan_db_password', 'utf8').trim();
+const userToCreate = cat('/run/secrets/jikan_db_username').trim();
+const userPassword = cat('/run/secrets/jikan_db_password').trim();
 db = db.getSiblingDB("admin");
 db.createUser({ user: userToCreate, pwd: userPassword, roles: [{ role: "readWrite", db: "jikan" }] });
 db = db.getSiblingDB("jikan");
@@ -265,7 +265,7 @@ services:
       jikan_typesense: { condition: service_started }
 
   jikan_mongo:
-    image: docker.io/mongo:focal
+    image: docker.io/mongo:4.4.18
     container_name: jikan_mongo
     hostname: jikan_mongo
     restart: unless-stopped
